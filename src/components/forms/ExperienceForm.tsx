@@ -1,33 +1,51 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useResume, Experience } from '../../contexts/ResumeContext'
 
-// Helper: format month string for display
 function fmtDate(d: string) {
   if (!d) return ''
   const [y, m] = d.split('-')
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   return `${months[parseInt(m) - 1]} ${y}`
 }
 
-// Collapsed summary row
 function ExperienceRow({
   exp,
+  index,
+  total,
   onEdit,
   onDelete,
+  onDragStart,
+  onDragOver,
+  onDrop,
 }: {
   exp: Experience
+  index: number
+  total: number
   onEdit: () => void
   onDelete: () => void
+  onDragStart: (index: number) => void
+  onDragOver: (e: React.DragEvent, index: number) => void
+  onDrop: (index: number) => void
 }) {
+  const [isDragOver, setIsDragOver] = useState(false)
+
   return (
-    <div className="exp-card">
+    <div
+      className={`exp-card draggable-card ${isDragOver ? 'drag-over' : ''}`}
+      draggable
+      onDragStart={() => onDragStart(index)}
+      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); onDragOver(e, index) }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={() => { setIsDragOver(false); onDrop(index) }}
+    >
       <div className="exp-card-header">
-        <div>
+        <div className="drag-handle" title="Drag to reorder">⋮⋮</div>
+        <div style={{ flex: 1 }}>
           <p className="exp-position">{exp.position || 'New Position'}</p>
           <p className="exp-company">{exp.company || 'Company'}</p>
           {exp.startDate && (
             <p className="exp-dates">
-              {fmtDate(exp.startDate)} — {exp.current ? 'Present' : fmtDate(exp.endDate)}
+              {fmtDate(exp.startDate)} – {exp.current ? 'Present' : fmtDate(exp.endDate)}
             </p>
           )}
         </div>
@@ -40,7 +58,6 @@ function ExperienceRow({
   )
 }
 
-// Expanded edit form — uses local state to buffer input, writes to context on blur
 function ExperienceEditForm({
   exp,
   onDone,
@@ -144,12 +161,12 @@ function ExperienceEditForm({
         <textarea
           className="form-input"
           value={description}
-          rows={6}
+          rows={5}
           onChange={e => setDescription(e.target.value)}
           onBlur={flush}
-          placeholder={'• Led a team of 5 developers\n• Increased performance by 40%\n• Mentored junior developers'}
+          placeholder={'• Built a feature that cut load time by 40%\n• Mentored two junior developers\n• Collaborated with design and product teams'}
         />
-        <p className="form-hint">Use bullet points (•) to list key achievements</p>
+        <p className="form-hint">Start each line with a bullet point (•) to list your key contributions.</p>
       </div>
 
       <div className="form-actions">
@@ -161,8 +178,9 @@ function ExperienceEditForm({
 }
 
 export default function ExperienceForm() {
-  const { experience, addExperience, updateExperience, deleteExperience, generateId } = useResume()
+  const { experience, addExperience, updateExperience, deleteExperience, reorderExperience, generateId } = useResume()
   const [editingId, setEditingId] = useState<string | null>(null)
+  const dragIndex = useRef<number>(-1)
 
   const handleAdd = () => {
     const id = generateId()
@@ -185,6 +203,13 @@ export default function ExperienceForm() {
     if (editingId === id) setEditingId(null)
   }
 
+  const handleDrop = (toIndex: number) => {
+    if (dragIndex.current !== -1 && dragIndex.current !== toIndex) {
+      reorderExperience(dragIndex.current, toIndex)
+    }
+    dragIndex.current = -1
+  }
+
   return (
     <div className="section-wrapper">
       <div className="section-header">
@@ -199,7 +224,7 @@ export default function ExperienceForm() {
         </div>
       ) : (
         <div className="items-list">
-          {experience.map(exp =>
+          {experience.map((exp, index) =>
             editingId === exp.id ? (
               <ExperienceEditForm
                 key={exp.id}
@@ -212,8 +237,13 @@ export default function ExperienceForm() {
               <ExperienceRow
                 key={exp.id}
                 exp={exp}
+                index={index}
+                total={experience.length}
                 onEdit={() => setEditingId(exp.id)}
                 onDelete={() => handleDelete(exp.id)}
+                onDragStart={(i) => { dragIndex.current = i }}
+                onDragOver={(_e, _i) => {}}
+                onDrop={handleDrop}
               />
             )
           )}

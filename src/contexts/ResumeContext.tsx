@@ -73,12 +73,15 @@ type ResumeAction =
   | { type: 'ADD_EXPERIENCE'; payload: Experience }
   | { type: 'UPDATE_EXPERIENCE'; payload: { id: string; data: Partial<Experience> } }
   | { type: 'DELETE_EXPERIENCE'; payload: string }
+  | { type: 'REORDER_EXPERIENCE'; payload: { fromIndex: number; toIndex: number } }
   | { type: 'ADD_EDUCATION'; payload: Education }
   | { type: 'UPDATE_EDUCATION'; payload: { id: string; data: Partial<Education> } }
   | { type: 'DELETE_EDUCATION'; payload: string }
+  | { type: 'REORDER_EDUCATION'; payload: { fromIndex: number; toIndex: number } }
   | { type: 'ADD_SKILL'; payload: Skill }
   | { type: 'UPDATE_SKILL'; payload: { id: string; data: Partial<Skill> } }
   | { type: 'DELETE_SKILL'; payload: string }
+  | { type: 'REORDER_SKILLS'; payload: { fromIndex: number; toIndex: number } }
   | { type: 'SET_TEMPLATE'; payload: string }
   | { type: 'UPDATE_STYLE'; payload: Partial<ResumeStyle> }
   | { type: 'TOGGLE_SECTION'; payload: keyof ResumeData['sections'] }
@@ -160,6 +163,13 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
         }
       }
 
+    case 'REORDER_EXPERIENCE': {
+      const arr = [...state.data.experience]
+      const [moved] = arr.splice(action.payload.fromIndex, 1)
+      arr.splice(action.payload.toIndex, 0, moved)
+      return { ...state, data: { ...state.data, experience: arr } }
+    }
+
     case 'ADD_EDUCATION':
       return {
         ...state,
@@ -186,6 +196,13 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
         }
       }
 
+    case 'REORDER_EDUCATION': {
+      const arr = [...state.data.education]
+      const [moved] = arr.splice(action.payload.fromIndex, 1)
+      arr.splice(action.payload.toIndex, 0, moved)
+      return { ...state, data: { ...state.data, education: arr } }
+    }
+
     case 'ADD_SKILL':
       return {
         ...state,
@@ -211,6 +228,13 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
           skills: state.data.skills.filter(skill => skill.id !== action.payload)
         }
       }
+
+    case 'REORDER_SKILLS': {
+      const arr = [...state.data.skills]
+      const [moved] = arr.splice(action.payload.fromIndex, 1)
+      arr.splice(action.payload.toIndex, 0, moved)
+      return { ...state, data: { ...state.data, skills: arr } }
+    }
 
     case 'SET_TEMPLATE':
       return { ...state, data: { ...state.data, template: action.payload } }
@@ -268,11 +292,14 @@ interface ResumeContextType {
   setSelectedTemplate: (template: string) => void
   updateStyle: (style: Partial<ResumeStyle>) => void
   toggleSection: (section: keyof ResumeData['sections']) => void
+  reorderExperience: (fromIndex: number, toIndex: number) => void
+  reorderEducation: (fromIndex: number, toIndex: number) => void
+  reorderSkills: (fromIndex: number, toIndex: number) => void
   generateId: () => string
   resetResume: () => void
   loadResume: (data: ResumeData) => void
   exportResume: () => void
-  importResume: (data: ResumeData) => void
+  importResume: (data: unknown) => void
 }
 
 const ResumeContext = createContext<ResumeContextType | undefined>(undefined)
@@ -292,8 +319,24 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     link.click()
   }
 
-  const importResume = (data: ResumeData) => {
-    dispatch({ type: 'LOAD_RESUME', payload: data })
+  const importResume = (data: unknown) => {
+    try {
+      const raw = data as Partial<ResumeData>
+      // Merge with initial state so partial/old JSON files still work
+      const merged: ResumeData = {
+        personalInfo: { ...initialState.data.personalInfo, ...(raw.personalInfo ?? {}) },
+        summary: typeof raw.summary === 'string' ? raw.summary : '',
+        experience: Array.isArray(raw.experience) ? raw.experience : [],
+        education: Array.isArray(raw.education) ? raw.education : [],
+        skills: Array.isArray(raw.skills) ? raw.skills : [],
+        template: typeof raw.template === 'string' ? raw.template : 'professional',
+        style: { ...initialState.data.style, ...(raw.style ?? {}) },
+        sections: { ...initialState.data.sections, ...(raw.sections ?? {}) },
+      }
+      dispatch({ type: 'LOAD_RESUME', payload: merged })
+    } catch {
+      alert('Could not load resume. The file may be corrupted or in an unsupported format.')
+    }
   }
 
   const contextValue: ResumeContextType = {
@@ -320,6 +363,9 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     setSelectedTemplate: (template) => dispatch({ type: 'SET_TEMPLATE', payload: template }),
     updateStyle: (style) => dispatch({ type: 'UPDATE_STYLE', payload: style }),
     toggleSection: (section) => dispatch({ type: 'TOGGLE_SECTION', payload: section }),
+    reorderExperience: (fromIndex, toIndex) => dispatch({ type: 'REORDER_EXPERIENCE', payload: { fromIndex, toIndex } }),
+    reorderEducation: (fromIndex, toIndex) => dispatch({ type: 'REORDER_EDUCATION', payload: { fromIndex, toIndex } }),
+    reorderSkills: (fromIndex, toIndex) => dispatch({ type: 'REORDER_SKILLS', payload: { fromIndex, toIndex } }),
     generateId,
     resetResume: () => dispatch({ type: 'RESET_RESUME' }),
     loadResume: (data) => dispatch({ type: 'LOAD_RESUME', payload: data }),

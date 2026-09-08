@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useResume, Skill } from '../../contexts/ResumeContext'
 
 const SUGGESTIONS = [
@@ -15,9 +15,11 @@ const levelColors: Record<Skill['level'], string> = {
 }
 
 export default function SkillsForm() {
-  const { skills, addSkill, updateSkill, deleteSkill, generateId } = useResume()
+  const { skills, addSkill, updateSkill, deleteSkill, reorderSkills, generateId } = useResume()
   const [name, setName] = useState('')
   const [level, setLevel] = useState<Skill['level']>('intermediate')
+  const dragIndex = useRef<number>(-1)
+  const [dragOverIndex, setDragOverIndex] = useState<number>(-1)
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,6 +27,14 @@ export default function SkillsForm() {
     addSkill({ id: generateId(), name: name.trim(), level })
     setName('')
     setLevel('intermediate')
+  }
+
+  const handleDrop = (toIndex: number) => {
+    if (dragIndex.current !== -1 && dragIndex.current !== toIndex) {
+      reorderSkills(dragIndex.current, toIndex)
+    }
+    dragIndex.current = -1
+    setDragOverIndex(-1)
   }
 
   const unusedSuggestions = SUGGESTIONS.filter(
@@ -70,8 +80,17 @@ export default function SkillsForm() {
 
       {skills.length > 0 && (
         <div className="skills-list">
-          {skills.map(skill => (
-            <div key={skill.id} className="skill-row">
+          {skills.map((skill, index) => (
+            <div
+              key={skill.id}
+              className={`skill-row draggable-card ${dragOverIndex === index ? 'drag-over' : ''}`}
+              draggable
+              onDragStart={() => { dragIndex.current = index }}
+              onDragOver={(e) => { e.preventDefault(); setDragOverIndex(index) }}
+              onDragLeave={() => setDragOverIndex(-1)}
+              onDrop={() => handleDrop(index)}
+            >
+              <div className="drag-handle" title="Drag to reorder">⋮⋮</div>
               <span className="skill-name">{skill.name}</span>
               <span className={`badge ${levelColors[skill.level]}`}>{skill.level}</span>
               <select

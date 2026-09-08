@@ -1,33 +1,49 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useResume, Education } from '../../contexts/ResumeContext'
 
 function fmtDate(d: string) {
   if (!d) return ''
   const [y, m] = d.split('-')
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   return `${months[parseInt(m) - 1]} ${y}`
 }
 
 function EducationRow({
   edu,
+  index,
   onEdit,
   onDelete,
+  onDragStart,
+  onDrop,
 }: {
   edu: Education
+  index: number
   onEdit: () => void
   onDelete: () => void
+  onDragStart: (index: number) => void
+  onDrop: (index: number) => void
 }) {
+  const [isDragOver, setIsDragOver] = useState(false)
+
   return (
-    <div className="exp-card">
+    <div
+      className={`exp-card draggable-card ${isDragOver ? 'drag-over' : ''}`}
+      draggable
+      onDragStart={() => onDragStart(index)}
+      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={() => { setIsDragOver(false); onDrop(index) }}
+    >
       <div className="exp-card-header">
-        <div>
+        <div className="drag-handle" title="Drag to reorder">⋮⋮</div>
+        <div style={{ flex: 1 }}>
           <p className="exp-position">
             {edu.degree || 'Degree'} {edu.field && `in ${edu.field}`}
           </p>
           <p className="exp-company">{edu.institution || 'Institution'}</p>
           {edu.startDate && (
             <p className="exp-dates">
-              {fmtDate(edu.startDate)} — {fmtDate(edu.endDate)}
+              {fmtDate(edu.startDate)} – {fmtDate(edu.endDate)}
             </p>
           )}
           {edu.gpa && <p className="exp-dates">GPA: {edu.gpa}</p>}
@@ -162,8 +178,9 @@ function EducationEditForm({
 }
 
 export default function EducationForm() {
-  const { education, addEducation, updateEducation, deleteEducation, generateId } = useResume()
+  const { education, addEducation, updateEducation, deleteEducation, reorderEducation, generateId } = useResume()
   const [editingId, setEditingId] = useState<string | null>(null)
+  const dragIndex = useRef<number>(-1)
 
   const handleAdd = () => {
     const id = generateId()
@@ -186,6 +203,13 @@ export default function EducationForm() {
     if (editingId === id) setEditingId(null)
   }
 
+  const handleDrop = (toIndex: number) => {
+    if (dragIndex.current !== -1 && dragIndex.current !== toIndex) {
+      reorderEducation(dragIndex.current, toIndex)
+    }
+    dragIndex.current = -1
+  }
+
   return (
     <div className="section-wrapper">
       <div className="section-header">
@@ -200,7 +224,7 @@ export default function EducationForm() {
         </div>
       ) : (
         <div className="items-list">
-          {education.map(edu =>
+          {education.map((edu, index) =>
             editingId === edu.id ? (
               <EducationEditForm
                 key={edu.id}
@@ -213,8 +237,11 @@ export default function EducationForm() {
               <EducationRow
                 key={edu.id}
                 edu={edu}
+                index={index}
                 onEdit={() => setEditingId(edu.id)}
                 onDelete={() => handleDelete(edu.id)}
+                onDragStart={(i) => { dragIndex.current = i }}
+                onDrop={handleDrop}
               />
             )
           )}

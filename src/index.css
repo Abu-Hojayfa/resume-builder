@@ -1,4 +1,4 @@
-/* ─── Google Fonts ─────────────────────────────────────────────────────── */
+﻿/* ─── Google Fonts ─────────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&family=Montserrat:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&family=Merriweather:wght@300;400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
@@ -1009,8 +1009,43 @@ textarea.form-input { resize: vertical; min-height: 120px; line-height: 1.55; }
     box-shadow: none !important;
   }
 
-  .resume-preview-container {
-    box-shadow: none !important;
-    width: 100% !important;
-  }
+}
+/* ══════════════════════════════════════════════════════════════════════════
+   DRAG AND DROP
+══════════════════════════════════════════════════════════════════════════ */
+
+.draggable-card {
+  cursor: grab;
+  transition: box-shadow 0.15s, opacity 0.15s, transform 0.1s;
+}
+
+.draggable-card:active {
+  cursor: grabbing;
+}
+
+.draggable-card:hover .drag-handle {
+  opacity: 1;
+}
+
+.draggable-card.drag-over {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  transform: scale(1.01);
+}
+
+.drag-handle {
+  font-size: 16px;
+  color: var(--color-muted);
+  opacity: 0.35;
+  cursor: grab;
+  padding: 0 8px 0 0;
+  user-select: none;
+  flex-shrink: 0;
+  letter-spacing: -2px;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
