@@ -1,7 +1,9 @@
 import { useResume } from '../contexts/ResumeContext'
+import { useTheme } from '../contexts/ThemeContext'
 
 export default function Header() {
   const { exportResume, importResume } = useResume()
+  const { theme, toggleTheme } = useTheme()
 
   const handleImport = () => {
     const input = document.createElement('input')
@@ -31,8 +33,20 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="header-inner">
-        <p className="header-tagline">Build your resume</p>
+        <div className="header-brand">
+          <span className="header-title">ResumeKit</span>
+          <span className="header-tagline">Build & Preview Professional Resumes</span>
+        </div>
         <div className="header-actions">
+          <button
+            onClick={toggleTheme}
+            className="theme-toggle-btn"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle theme"
+          >
+            <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+            <span>{theme === 'dark' ? 'Light' : 'Night'}</span>
+          </button>
           <button onClick={handleImport} className="btn-ghost btn-sm">Import</button>
           <button onClick={exportResume} className="btn-ghost btn-sm">Export JSON</button>
           <button onClick={handlePrint} className="btn-primary btn-sm">Print / PDF</button>

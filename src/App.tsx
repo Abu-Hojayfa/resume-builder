@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ResumeProvider } from './contexts/ResumeContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import ResumePreview from './components/ResumePreview'
@@ -12,46 +13,58 @@ import EducationForm from './components/forms/EducationForm'
 import SkillsForm from './components/forms/SkillsForm'
 
 export type ActiveSection = 'template' | 'style' | 'personal' | 'summary' | 'experience' | 'education' | 'skills'
+export type MobileTab = 'form' | 'preview'
 
 function renderSection(active: ActiveSection) {
   switch (active) {
-    case 'template':  return <TemplateSelector />
-    case 'style':     return <StyleForm />
-    case 'personal':  return <PersonalInfoForm />
-    case 'summary':   return <SummaryForm />
+    case 'template':   return <TemplateSelector />
+    case 'style':      return <StyleForm />
+    case 'personal':   return <PersonalInfoForm />
+    case 'summary':    return <SummaryForm />
     case 'experience': return <ExperienceForm />
-    case 'education': return <EducationForm />
-    case 'skills':    return <SkillsForm />
+    case 'education':  return <EducationForm />
+    case 'skills':     return <SkillsForm />
   }
 }
 
 function App() {
   const [active, setActive] = useState<ActiveSection>('template')
+  const [mobileTab, setMobileTab] = useState<MobileTab>('form')
 
   return (
-    <ResumeProvider>
-      <div className="app-shell">
-        <Header />
-        <div className="app-body">
-          <Sidebar activeSection={active} onSectionChange={setActive} />
-          <main className="app-main">
-            <div className="form-panel">
-              {renderSection(active)}
-            </div>
-            <div className="preview-panel">
-              <div className="preview-header">
-                <span>Live Preview</span>
+    <ThemeProvider>
+      <ResumeProvider>
+        <div className="app-shell">
+          <Header />
+          
+          {/* Mobile View Toggle Bar (Only visible on screens < 992px) */}
+          <div className="mobile-view-tabs">
+            <button
+              onClick={() => setMobileTab('form')}
+              className={`mobile-tab-btn ${mobileTab === 'form' ? 'mobile-tab-btn--active' : ''}`}
+            >
+              📝 Form Builder
+            </button>
+            <button
+              onClick={() => setMobileTab('preview')}
+              className={`mobile-tab-btn ${mobileTab === 'preview' ? 'mobile-tab-btn--active' : ''}`}
+            >
+              👁️ Live Preview
+            </button>
+          </div>
+
+          <div className="app-body">
+            <Sidebar activeSection={active} onSectionChange={setActive} />
+            <main className="app-main">
+              <div className={`form-panel ${mobileTab === 'preview' ? 'mobile-hidden' : ''}`}>
+                {renderSection(active)}
               </div>
-              <div className="preview-scroll">
-                <div className="preview-scale-wrap">
-                  <ResumePreview />
-                </div>
-              </div>
-            </div>
-          </main>
+              <ResumePreview className={mobileTab === 'form' ? 'mobile-hidden' : ''} />
+            </main>
+          </div>
         </div>
-      </div>
-    </ResumeProvider>
+      </ResumeProvider>
+    </ThemeProvider>
   )
 }
 
