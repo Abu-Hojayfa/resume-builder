@@ -26,10 +26,6 @@ export default function Header() {
     input.click()
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -49,7 +45,6 @@ export default function Header() {
           </button>
           <button onClick={handleImport} className="btn-ghost btn-sm">Import</button>
           <button onClick={exportResume} className="btn-ghost btn-sm">Export JSON</button>
-          <button onClick={handlePrint} className="btn-primary btn-sm">Print / PDF</button>
         </div>
       </div>
     </header>
