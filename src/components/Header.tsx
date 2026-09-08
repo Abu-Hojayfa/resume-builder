@@ -2,7 +2,7 @@ import { useResume } from '../contexts/ResumeContext'
 import { useTheme } from '../contexts/ThemeContext'
 
 export default function Header() {
-  const { exportResume, importResume } = useResume()
+  const { exportResume, importResume, resetResume } = useResume()
   const { theme, toggleTheme } = useTheme()
 
   const handleImport = () => {
@@ -26,6 +26,12 @@ export default function Header() {
     input.click()
   }
 
+  const handleClear = () => {
+    if (window.confirm('Are you sure you want to clear all form data? This cannot be undone.')) {
+      resetResume()
+    }
+  }
+
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -45,6 +51,7 @@ export default function Header() {
           </button>
           <button onClick={handleImport} className="btn-ghost btn-sm">Import</button>
           <button onClick={exportResume} className="btn-ghost btn-sm">Export JSON</button>
+          <button onClick={handleClear} className="btn-ghost btn-sm" style={{ color: '#ef4444' }}>Clear Form</button>
         </div>
       </div>
     </header>
