@@ -9,12 +9,19 @@ import NexusTemplate from './templates/NexusTemplate'
 
 interface PreviewProps {
   className?: string
+  isFullscreen: boolean
+  onCloseFullscreen: () => void
+  onOpenFullscreen: () => void
 }
 
-export default function ResumePreview({ className = '' }: PreviewProps) {
+export default function ResumePreview({
+  className = '',
+  isFullscreen,
+  onCloseFullscreen,
+  onOpenFullscreen,
+}: PreviewProps) {
   const { personalInfo, summary, experience, education, skills, selectedTemplate, style, sections } = useResume()
   const [scale, setScale] = useState<number>(0.68)
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const resumeData = { personalInfo, summary, experience, education, skills, template: selectedTemplate, style, sections }
@@ -44,9 +51,10 @@ export default function ResumePreview({ className = '' }: PreviewProps) {
     return () => window.removeEventListener('resize', handleAutoFit)
   }, [])
 
-  const zoomIn = () => setScale(prev => Math.min(Number((prev + 0.08).toFixed(2)), 1.3))
+  const zoomIn  = () => setScale(prev => Math.min(Number((prev + 0.08).toFixed(2)), 1.3))
   const zoomOut = () => setScale(prev => Math.max(Number((prev - 0.08).toFixed(2)), 0.35))
 
+  // The actual resume element (rendered at native 8.5in × 11in)
   const documentElement = (
     <div
       className="resume-preview-container resume-content"
@@ -63,11 +71,18 @@ export default function ResumePreview({ className = '' }: PreviewProps) {
       <div className="preview-header">
         <span className="preview-header-title">Live Preview</span>
         <div className="preview-controls">
-          <button onClick={zoomOut} className="zoom-btn" title="Zoom Out" aria-label="Zoom out">-</button>
+          <button onClick={zoomOut} className="zoom-btn" title="Zoom Out" aria-label="Zoom out">−</button>
           <span className="zoom-val">{Math.round(scale * 100)}%</span>
           <button onClick={zoomIn} className="zoom-btn" title="Zoom In" aria-label="Zoom in">+</button>
           <button onClick={handleAutoFit} className="zoom-btn" title="Fit to Screen" aria-label="Fit screen">Fit</button>
-          <button onClick={() => setIsFullscreen(true)} className="zoom-btn" title="Full Screen View" aria-label="Full screen">⛶</button>
+          <button
+            onClick={onOpenFullscreen}
+            className="zoom-btn"
+            title="Full Screen View"
+            aria-label="Full screen"
+          >
+            ⛶
+          </button>
         </div>
       </div>
 
@@ -78,7 +93,6 @@ export default function ResumePreview({ className = '' }: PreviewProps) {
             width: `calc(8.5in * ${scale})`,
             height: `calc(11in * ${scale} + 40px)`,
             display: 'flex',
-            justifyConstraint: 'center',
             alignItems: 'flex-start',
           }}
         >
@@ -97,14 +111,21 @@ export default function ResumePreview({ className = '' }: PreviewProps) {
 
       {/* Fullscreen Preview Modal */}
       {isFullscreen && (
-        <div className="preview-modal-overlay">
+        <div className="preview-modal-overlay" role="dialog" aria-modal="true" aria-label="Fullscreen resume preview">
           <div className="preview-modal-header">
             <span className="preview-header-title">Full Screen Resume Preview</span>
             <div className="preview-controls">
-              <button onClick={zoomOut} className="zoom-btn">-</button>
+              <button onClick={zoomOut} className="zoom-btn" aria-label="Zoom out">−</button>
               <span className="zoom-val">{Math.round(scale * 100)}%</span>
-              <button onClick={zoomIn} className="zoom-btn">+</button>
-              <button onClick={() => setIsFullscreen(false)} className="btn-primary btn-sm">Close ✕</button>
+              <button onClick={zoomIn} className="zoom-btn" aria-label="Zoom in">+</button>
+              <button onClick={handleAutoFit} className="zoom-btn" aria-label="Fit to screen">Fit</button>
+              <button
+                onClick={onCloseFullscreen}
+                className="btn-primary btn-sm"
+                aria-label="Close fullscreen"
+              >
+                Close ✕
+              </button>
             </div>
           </div>
           <div className="preview-modal-body">

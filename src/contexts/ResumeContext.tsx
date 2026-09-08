@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react'
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react'
 
 export interface PersonalInfo {
   fullName: string
@@ -96,31 +96,56 @@ const defaultStyle: ResumeStyle = {
   dividerColor: '#cbd5e1',
 }
 
-const initialState: ResumeState = {
-  data: {
-    personalInfo: {
-      fullName: '',
-      email: '',
-      phone: '',
-      location: '',
-      website: '',
-      linkedin: '',
-      github: ''
-    },
-    summary: '',
-    experience: [],
-    education: [],
-    skills: [],
-    template: 'professional',
-    style: defaultStyle,
-    sections: {
-      personalInfo: true,
-      summary: true,
-      experience: true,
-      education: true,
-      skills: true
-    }
+const defaultData: ResumeData = {
+  personalInfo: {
+    fullName: '',
+    email: '',
+    phone: '',
+    location: '',
+    website: '',
+    linkedin: '',
+    github: ''
+  },
+  summary: '',
+  experience: [],
+  education: [],
+  skills: [],
+  template: 'professional',
+  style: defaultStyle,
+  sections: {
+    personalInfo: true,
+    summary: true,
+    experience: true,
+    education: true,
+    skills: true
   }
+}
+
+const STORAGE_KEY = 'resumekit_data_v1'
+
+function loadFromStorage(): ResumeData {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return defaultData
+    const parsed = JSON.parse(raw) as Partial<ResumeData>
+    // Merge with defaults so missing fields don't break anything
+    return {
+      personalInfo: { ...defaultData.personalInfo, ...(parsed.personalInfo ?? {}) },
+      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+      experience: Array.isArray(parsed.experience) ? parsed.experience : [],
+      education: Array.isArray(parsed.education) ? parsed.education : [],
+      skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+      template: typeof parsed.template === 'string' ? parsed.template : 'professional',
+      style: { ...defaultData.style, ...(parsed.style ?? {}) },
+      sections: { ...defaultData.sections, ...(parsed.sections ?? {}) },
+    }
+  } catch {
+    return defaultData
+  }
+}
+
+const initialState: ResumeState = {
+  data: loadFromStorage()
 }
 
 function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
@@ -261,7 +286,7 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
       return { ...state, data: action.payload }
 
     case 'RESET_RESUME':
-      return initialState
+      return { ...state, data: defaultData }
 
     default:
       return state
@@ -307,6 +332,15 @@ const ResumeContext = createContext<ResumeContextType | undefined>(undefined)
 export function ResumeProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(resumeReducer, initialState)
 
+  // Persist to localStorage on every state change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data))
+    } catch {
+      // Quota exceeded or private mode — silently fail
+    }
+  }, [state.data])
+
   const generateId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
   const exportResume = () => {
@@ -322,16 +356,16 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   const importResume = (data: unknown) => {
     try {
       const raw = data as Partial<ResumeData>
-      // Merge with initial state so partial/old JSON files still work
+      // Merge with defaults so partial/old JSON files still work
       const merged: ResumeData = {
-        personalInfo: { ...initialState.data.personalInfo, ...(raw.personalInfo ?? {}) },
+        personalInfo: { ...defaultData.personalInfo, ...(raw.personalInfo ?? {}) },
         summary: typeof raw.summary === 'string' ? raw.summary : '',
         experience: Array.isArray(raw.experience) ? raw.experience : [],
         education: Array.isArray(raw.education) ? raw.education : [],
         skills: Array.isArray(raw.skills) ? raw.skills : [],
         template: typeof raw.template === 'string' ? raw.template : 'professional',
-        style: { ...initialState.data.style, ...(raw.style ?? {}) },
-        sections: { ...initialState.data.sections, ...(raw.sections ?? {}) },
+        style: { ...defaultData.style, ...(raw.style ?? {}) },
+        sections: { ...defaultData.sections, ...(raw.sections ?? {}) },
       }
       dispatch({ type: 'LOAD_RESUME', payload: merged })
     } catch {
@@ -367,7 +401,10 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     reorderEducation: (fromIndex, toIndex) => dispatch({ type: 'REORDER_EDUCATION', payload: { fromIndex, toIndex } }),
     reorderSkills: (fromIndex, toIndex) => dispatch({ type: 'REORDER_SKILLS', payload: { fromIndex, toIndex } }),
     generateId,
-    resetResume: () => dispatch({ type: 'RESET_RESUME' }),
+    resetResume: () => {
+      dispatch({ type: 'RESET_RESUME' })
+      localStorage.removeItem(STORAGE_KEY)
+    },
     loadResume: (data) => dispatch({ type: 'LOAD_RESUME', payload: data }),
     exportResume,
     importResume,

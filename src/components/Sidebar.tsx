@@ -1,9 +1,11 @@
 import { ActiveSection } from '../App'
 import { useResume } from '../contexts/ResumeContext'
+import { usePdfExport } from '../hooks/usePdfExport'
 
 interface SidebarProps {
   activeSection: ActiveSection
   onSectionChange: (section: ActiveSection) => void
+  onOpenFullscreen: () => void
 }
 
 const NAV_ITEMS: { id: ActiveSection; label: string; icon: string }[] = [
@@ -27,8 +29,9 @@ function isComplete(id: ActiveSection, ctx: ReturnType<typeof useResume>) {
   }
 }
 
-export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+export default function Sidebar({ activeSection, onSectionChange, onOpenFullscreen }: SidebarProps) {
   const ctx = useResume()
+  const { savePdf } = usePdfExport()
 
   const totalCompletable = NAV_ITEMS.filter(n => !['template','style'].includes(n.id)).length
   const completed = NAV_ITEMS.filter(n => !['template','style'].includes(n.id) && isComplete(n.id, ctx)).length
@@ -70,6 +73,29 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           )
         })}
       </nav>
+
+      {/* Bottom action bar — Final Preview + Save PDF */}
+      <div className="sidebar-footer">
+        <div className="sidebar-footer-label">Final Output</div>
+        <button
+          className="sidebar-action-btn sidebar-action-btn--preview"
+          onClick={onOpenFullscreen}
+          title="Open full screen resume preview"
+          aria-label="Final preview"
+        >
+          <span className="sidebar-action-icon">⛶</span>
+          <span>Final Preview</span>
+        </button>
+        <button
+          className="sidebar-action-btn sidebar-action-btn--save"
+          onClick={savePdf}
+          title="Save resume as PDF"
+          aria-label="Save as PDF"
+        >
+          <span className="sidebar-action-icon">↓</span>
+          <span>Save as PDF</span>
+        </button>
+      </div>
     </aside>
   )
 }

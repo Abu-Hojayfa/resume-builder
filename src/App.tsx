@@ -30,6 +30,7 @@ function renderSection(active: ActiveSection) {
 function App() {
   const [active, setActive] = useState<ActiveSection>('template')
   const [mobileTab, setMobileTab] = useState<MobileTab>('form')
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
 
   return (
     <ThemeProvider>
@@ -54,12 +55,21 @@ function App() {
           </div>
 
           <div className="app-body">
-            <Sidebar activeSection={active} onSectionChange={setActive} />
+            <Sidebar
+              activeSection={active}
+              onSectionChange={setActive}
+              onOpenFullscreen={() => setIsFullscreen(true)}
+            />
             <main className="app-main">
               <div className={`form-panel ${mobileTab === 'preview' ? 'mobile-hidden' : ''}`}>
                 {renderSection(active)}
               </div>
-              <ResumePreview className={mobileTab === 'form' ? 'mobile-hidden' : ''} />
+              <ResumePreview
+                className={mobileTab === 'form' ? 'mobile-hidden' : ''}
+                isFullscreen={isFullscreen}
+                onCloseFullscreen={() => setIsFullscreen(false)}
+                onOpenFullscreen={() => setIsFullscreen(true)}
+              />
             </main>
           </div>
         </div>
