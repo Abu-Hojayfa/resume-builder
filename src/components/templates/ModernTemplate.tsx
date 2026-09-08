@@ -1,148 +1,115 @@
 import { ResumeData } from '../../contexts/ResumeContext'
 
-interface ModernTemplateProps {
-  data: ResumeData
+interface Props { data: ResumeData }
+
+function fmt(d: string) {
+  if (!d) return ''
+  const date = new Date(d + '-01')
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 }
 
-export default function ModernTemplate({ data }: ModernTemplateProps) {
-  const { personalInfo, summary, experience, education, skills, sections } = data
+export default function ModernTemplate({ data }: Props) {
+  const { personalInfo: p, summary, experience, education, skills, sections, style } = data
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  }
+  const fontStack = `'${style.fontFamily}', system-ui, sans-serif`
+  const divider = style.dividerWidth > 0
+    ? `${style.dividerWidth}px solid ${style.dividerColor}`
+    : 'none'
+
+  const SectionHeading = ({ children }: { children: string }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+      <div style={{ width: 3, height: 18, background: style.accentColor, borderRadius: 2 }} />
+      <h2 style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em', color: style.accentColor, textTransform: 'uppercase', margin: 0 }}>{children}</h2>
+      <div style={{ flex: 1, height: style.dividerWidth, background: style.dividerColor }} />
+    </div>
+  )
 
   return (
-    <div className="resume-content font-sans text-gray-900" style={{ padding: '0.5in' }}>
-      {/* Header */}
+    <div style={{ fontFamily: fontStack, color: style.textColor, background: '#fff', minHeight: '11in' }}>
+
+      {/* Bold header bar */}
       {sections.personalInfo && (
-        <header className="bg-gradient-to-r from-primary-600 to-primary-800 text-white p-6 -m-2 mb-6 rounded-lg">
-          <h1 className="text-3xl font-bold mb-2">
-            {personalInfo.fullName || 'Your Name'}
-          </h1>
-          <div className="flex flex-wrap items-center text-sm space-x-4 mb-2">
-            {personalInfo.email && <span>{personalInfo.email}</span>}
-            {personalInfo.phone && <span>{personalInfo.phone}</span>}
-            {personalInfo.location && <span>{personalInfo.location}</span>}
+        <header style={{ background: style.accentColor, color: '#fff', padding: '0.35in 0.5in' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, margin: 0 }}>{p.fullName || 'Your Name'}</h1>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0 1.2rem', marginTop: 8, fontSize: '0.8rem', opacity: 0.85 }}>
+            {p.email && <span>{p.email}</span>}
+            {p.phone && <span>{p.phone}</span>}
+            {p.location && <span>{p.location}</span>}
+            {p.website && <span>{p.website}</span>}
+            {p.linkedin && <span>{p.linkedin}</span>}
+            {p.github && <span>{p.github}</span>}
           </div>
-          {(personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
-            <div className="flex flex-wrap items-center text-sm space-x-4">
-              {personalInfo.website && <span>{personalInfo.website}</span>}
-              {personalInfo.linkedin && <span>LinkedIn</span>}
-              {personalInfo.github && <span>GitHub</span>}
-            </div>
-          )}
         </header>
       )}
 
-      {/* Professional Summary */}
-      {sections.summary && summary && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-primary-700 mb-3 flex items-center">
-            <span className="w-2 h-6 bg-primary-600 mr-3"></span>
-            ABOUT ME
-          </h2>
-          <p className="text-sm leading-relaxed text-gray-700">
-            {summary}
-          </p>
-        </section>
-      )}
+      <div style={{ padding: '0.3in 0.5in' }}>
+        {/* Summary */}
+        {sections.summary && summary && (
+          <section style={{ marginBottom: 20 }}>
+            <SectionHeading>About</SectionHeading>
+            <p style={{ fontSize: '0.85rem', lineHeight: 1.6 }}>{summary}</p>
+          </section>
+        )}
 
-      {/* Experience */}
-      {sections.experience && experience.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-primary-700 mb-3 flex items-center">
-            <span className="w-2 h-6 bg-primary-600 mr-3"></span>
-            EXPERIENCE
-          </h2>
-          <div className="space-y-5">
-            {experience.map((exp) => (
-              <div key={exp.id} className="break-inside-avoid">
-                <div className="border-l-4 border-primary-300 pl-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">{exp.position}</h3>
-                      <p className="text-base font-medium text-primary-700">{exp.company}</p>
-                    </div>
-                    <div className="text-right text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded">
-                      <p className="font-medium">{formatDate(exp.startDate)} - {exp.current ? 'Present' : formatDate(exp.endDate)}</p>
-                      {exp.location && <p>{exp.location}</p>}
-                    </div>
-                  </div>
-                  {exp.description && (
-                    <div className="text-sm text-gray-800 leading-relaxed">
-                      {exp.description.split('\n').map((line, index) => (
-                        <p key={index} className="mb-1">{line}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Education */}
-      {sections.education && education.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-primary-700 mb-3 flex items-center">
-            <span className="w-2 h-6 bg-primary-600 mr-3"></span>
-            EDUCATION
-          </h2>
-          <div className="space-y-4">
-            {education.map((edu) => (
-              <div key={edu.id} className="break-inside-avoid border-l-4 border-primary-300 pl-4">
-                <div className="flex justify-between items-start">
+        {/* Experience */}
+        {sections.experience && experience.length > 0 && (
+          <section style={{ marginBottom: 20 }}>
+            <SectionHeading>Experience</SectionHeading>
+            {experience.map(exp => (
+              <div key={exp.id} style={{ marginBottom: 14, paddingLeft: 12, borderLeft: `3px solid ${style.dividerColor}`, pageBreakInside: 'avoid' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <h3 className="text-base font-bold text-gray-900">
-                      {edu.degree} {edu.field && `in ${edu.field}`}
-                    </h3>
-                    <p className="text-base font-medium text-primary-700">{edu.institution}</p>
-                    {edu.gpa && (
-                      <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>
-                    )}
+                    <p style={{ fontWeight: 700, fontSize: '0.88rem', margin: 0 }}>{exp.position}</p>
+                    <p style={{ fontSize: '0.82rem', color: style.accentColor, margin: '2px 0 0' }}>{exp.company}</p>
                   </div>
-                  <div className="text-right text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded">
-                    <p className="font-medium">{formatDate(edu.startDate)} - {formatDate(edu.endDate)}</p>
-                    {edu.location && <p>{edu.location}</p>}
-                  </div>
+                  <p style={{ fontSize: '0.75rem', color: '#6b7280', whiteSpace: 'nowrap', marginLeft: 12 }}>
+                    {fmt(exp.startDate)} – {exp.current ? 'Present' : fmt(exp.endDate)}
+                    {exp.location && ` · ${exp.location}`}
+                  </p>
                 </div>
+                {exp.description && (
+                  <div style={{ marginTop: 5, fontSize: '0.82rem', lineHeight: 1.55 }}>
+                    {exp.description.split('\n').map((l, i) => <p key={i} style={{ margin: '1px 0' }}>{l}</p>)}
+                  </div>
+                )}
               </div>
             ))}
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* Skills */}
-      {sections.skills && skills.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-primary-700 mb-3 flex items-center">
-            <span className="w-2 h-6 bg-primary-600 mr-3"></span>
-            SKILLS
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {skills.map((skill) => (
-              <div key={skill.id} className="bg-gray-50 rounded-lg p-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-800">{skill.name}</span>
-                  <div className="text-xs">
-                    <span className={`px-2 py-1 rounded-full font-medium ${
-                      skill.level === 'expert' ? 'bg-green-100 text-green-800' :
-                      skill.level === 'advanced' ? 'bg-blue-100 text-blue-800' :
-                      skill.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {skill.level}
-                    </span>
-                  </div>
+        {/* Education */}
+        {sections.education && education.length > 0 && (
+          <section style={{ marginBottom: 20 }}>
+            <SectionHeading>Education</SectionHeading>
+            {education.map(edu => (
+              <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, paddingLeft: 12, borderLeft: `3px solid ${style.dividerColor}` }}>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: '0.88rem', margin: 0 }}>{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</p>
+                  <p style={{ fontSize: '0.82rem', color: style.accentColor, margin: '2px 0 0' }}>{edu.institution}</p>
+                  {edu.gpa && <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '1px 0 0' }}>GPA: {edu.gpa}</p>}
                 </div>
+                <p style={{ fontSize: '0.75rem', color: '#6b7280', whiteSpace: 'nowrap', marginLeft: 12 }}>
+                  {fmt(edu.startDate)}{edu.endDate ? ` – ${fmt(edu.endDate)}` : ''}
+                </p>
               </div>
             ))}
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+
+        {/* Skills */}
+        {sections.skills && skills.length > 0 && (
+          <section>
+            <SectionHeading>Skills</SectionHeading>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {skills.map(s => (
+                <span key={s.id} style={{ padding: '3px 10px', background: `${style.accentColor}15`, color: style.accentColor, borderRadius: 4, fontSize: '0.78rem', fontWeight: 500 }}>
+                  {s.name}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   )
 }

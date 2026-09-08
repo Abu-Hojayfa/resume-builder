@@ -1,13 +1,173 @@
 import { useState } from 'react'
 import { useResume, Experience } from '../../contexts/ResumeContext'
 
+// Helper: format month string for display
+function fmtDate(d: string) {
+  if (!d) return ''
+  const [y, m] = d.split('-')
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return `${months[parseInt(m) - 1]} ${y}`
+}
+
+// Collapsed summary row
+function ExperienceRow({
+  exp,
+  onEdit,
+  onDelete,
+}: {
+  exp: Experience
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <div className="exp-card">
+      <div className="exp-card-header">
+        <div>
+          <p className="exp-position">{exp.position || 'New Position'}</p>
+          <p className="exp-company">{exp.company || 'Company'}</p>
+          {exp.startDate && (
+            <p className="exp-dates">
+              {fmtDate(exp.startDate)} — {exp.current ? 'Present' : fmtDate(exp.endDate)}
+            </p>
+          )}
+        </div>
+        <div className="exp-actions">
+          <button onClick={onEdit} className="btn-text-primary">Edit</button>
+          <button onClick={onDelete} className="btn-text-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Expanded edit form — uses local state to buffer input, writes to context on blur
+function ExperienceEditForm({
+  exp,
+  onDone,
+  onDelete,
+  onUpdate,
+}: {
+  exp: Experience
+  onDone: () => void
+  onDelete: () => void
+  onUpdate: (data: Partial<Experience>) => void
+}) {
+  const [position, setPosition] = useState(exp.position)
+  const [company, setCompany] = useState(exp.company)
+  const [location, setLocation] = useState(exp.location)
+  const [startDate, setStartDate] = useState(exp.startDate)
+  const [endDate, setEndDate] = useState(exp.endDate)
+  const [current, setCurrent] = useState(exp.current)
+  const [description, setDescription] = useState(exp.description)
+
+  const flush = () => {
+    onUpdate({ position, company, location, startDate, endDate, current, description })
+  }
+
+  const handleCurrentChange = (checked: boolean) => {
+    setCurrent(checked)
+    onUpdate({ current: checked, endDate: checked ? '' : endDate })
+  }
+
+  return (
+    <div className="exp-form">
+      <div className="form-group">
+        <label className="form-label">Job Title *</label>
+        <input
+          className="form-input"
+          type="text"
+          value={position}
+          onChange={e => setPosition(e.target.value)}
+          onBlur={flush}
+          placeholder="Software Engineer"
+        />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Company *</label>
+        <input
+          className="form-input"
+          type="text"
+          value={company}
+          onChange={e => setCompany(e.target.value)}
+          onBlur={flush}
+          placeholder="Google"
+        />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Location</label>
+        <input
+          className="form-input"
+          type="text"
+          value={location}
+          onChange={e => setLocation(e.target.value)}
+          onBlur={flush}
+          placeholder="San Francisco, CA"
+        />
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label className="form-label">Start Date *</label>
+          <input
+            className="form-input"
+            type="month"
+            value={startDate}
+            onChange={e => { setStartDate(e.target.value); onUpdate({ startDate: e.target.value }) }}
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">End Date</label>
+          <input
+            className="form-input"
+            type="month"
+            value={endDate}
+            disabled={current}
+            onChange={e => { setEndDate(e.target.value); onUpdate({ endDate: e.target.value }) }}
+          />
+        </div>
+      </div>
+
+      <div className="form-check">
+        <input
+          type="checkbox"
+          id={`current-${exp.id}`}
+          checked={current}
+          onChange={e => handleCurrentChange(e.target.checked)}
+        />
+        <label htmlFor={`current-${exp.id}`}>I currently work here</label>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Description</label>
+        <textarea
+          className="form-input"
+          value={description}
+          rows={6}
+          onChange={e => setDescription(e.target.value)}
+          onBlur={flush}
+          placeholder={'• Led a team of 5 developers\n• Increased performance by 40%\n• Mentored junior developers'}
+        />
+        <p className="form-hint">Use bullet points (•) to list key achievements</p>
+      </div>
+
+      <div className="form-actions">
+        <button onClick={onDelete} className="btn-danger">Delete</button>
+        <button onClick={() => { flush(); onDone() }} className="btn-primary">Done</button>
+      </div>
+    </div>
+  )
+}
+
 export default function ExperienceForm() {
   const { experience, addExperience, updateExperience, deleteExperience, generateId } = useResume()
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const handleAdd = () => {
-    const newExperience: Experience = {
-      id: generateId(),
+    const id = generateId()
+    const newExp: Experience = {
+      id,
       company: '',
       position: '',
       location: '',
@@ -16,199 +176,49 @@ export default function ExperienceForm() {
       current: false,
       description: ''
     }
-    addExperience(newExperience)
-    setEditingId(newExperience.id)
-  }
-
-  const handleUpdate = (id: string, data: Partial<Experience>) => {
-    updateExperience(id, data)
+    addExperience(newExp)
+    setEditingId(id)
   }
 
   const handleDelete = (id: string) => {
     deleteExperience(id)
-    if (editingId === id) {
-      setEditingId(null)
-    }
-  }
-
-  const ExperienceItem = ({ exp }: { exp: Experience }) => {
-    const isEditing = editingId === exp.id
-
-    if (!isEditing) {
-      return (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h4 className="font-medium text-gray-900">{exp.position || 'New Position'}</h4>
-              <p className="text-sm text-gray-600">{exp.company}</p>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setEditingId(exp.id)}
-                className="text-primary-600 hover:text-primary-700 text-sm"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(exp.id)}
-                className="text-red-600 hover:text-red-700 text-sm"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-          {exp.description && (
-            <p className="text-sm text-gray-700 mt-2">{exp.description.substring(0, 100)}...</p>
-          )}
-        </div>
-      )
-    }
-
-    return (
-      <div className="p-4 border border-gray-300 rounded-lg bg-white">
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Job Title *
-            </label>
-            <input
-              type="text"
-              value={exp.position}
-              onChange={(e) => handleUpdate(exp.id, { position: e.target.value })}
-              placeholder="Software Engineer"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company *
-            </label>
-            <input
-              type="text"
-              value={exp.company}
-              onChange={(e) => handleUpdate(exp.id, { company: e.target.value })}
-              placeholder="Google"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location
-            </label>
-            <input
-              type="text"
-              value={exp.location}
-              onChange={(e) => handleUpdate(exp.id, { location: e.target.value })}
-              placeholder="San Francisco, CA"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date *
-              </label>
-              <input
-                type="month"
-                value={exp.startDate}
-                onChange={(e) => handleUpdate(exp.id, { startDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
-              </label>
-              <input
-                type="month"
-                value={exp.endDate}
-                onChange={(e) => handleUpdate(exp.id, { endDate: e.target.value })}
-                disabled={exp.current}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={exp.current}
-                onChange={(e) => handleUpdate(exp.id, { 
-                  current: e.target.checked,
-                  endDate: e.target.checked ? '' : exp.endDate
-                })}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">I currently work here</span>
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              value={exp.description}
-              onChange={(e) => handleUpdate(exp.id, { description: e.target.value })}
-              placeholder="• Led a team of 5 developers to build a customer-facing web application
-• Increased system performance by 40% through database optimization
-• Mentored junior developers and conducted code reviews"
-              rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
-            <div className="mt-2 text-sm text-gray-500">
-              Use bullet points to highlight your key achievements and responsibilities
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={() => setEditingId(null)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Done
-            </button>
-            <button
-              onClick={() => handleDelete(exp.id)}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+    if (editingId === id) setEditingId(null)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900">Work Experience</h3>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          Add Experience
-        </button>
+    <div className="section-wrapper">
+      <div className="section-header">
+        <h2 className="section-title">Work Experience</h2>
+        <button onClick={handleAdd} className="btn-primary btn-sm">+ Add</button>
       </div>
 
-      <div className="space-y-4">
-        {experience.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No work experience added yet.</p>
-            <p className="text-sm">Click "Add Experience" to get started.</p>
-          </div>
-        ) : (
-          experience.map((exp) => (
-            <ExperienceItem key={exp.id} exp={exp} />
-          ))
-        )}
-      </div>
+      {experience.length === 0 ? (
+        <div className="empty-state">
+          <p>No experience added yet.</p>
+          <p>Click <strong>+ Add</strong> to get started.</p>
+        </div>
+      ) : (
+        <div className="items-list">
+          {experience.map(exp =>
+            editingId === exp.id ? (
+              <ExperienceEditForm
+                key={exp.id}
+                exp={exp}
+                onDone={() => setEditingId(null)}
+                onDelete={() => handleDelete(exp.id)}
+                onUpdate={data => updateExperience(exp.id, data)}
+              />
+            ) : (
+              <ExperienceRow
+                key={exp.id}
+                exp={exp}
+                onEdit={() => setEditingId(exp.id)}
+                onDelete={() => handleDelete(exp.id)}
+              />
+            )
+          )}
+        </div>
+      )}
     </div>
   )
 }

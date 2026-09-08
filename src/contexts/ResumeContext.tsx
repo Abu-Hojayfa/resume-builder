@@ -38,6 +38,14 @@ export interface Skill {
   level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
 }
 
+export interface ResumeStyle {
+  fontFamily: string
+  accentColor: string
+  textColor: string
+  dividerWidth: number
+  dividerColor: string
+}
+
 export interface ResumeData {
   personalInfo: PersonalInfo
   summary: string
@@ -45,6 +53,7 @@ export interface ResumeData {
   education: Education[]
   skills: Skill[]
   template: string
+  style: ResumeStyle
   sections: {
     personalInfo: boolean
     summary: boolean
@@ -56,8 +65,6 @@ export interface ResumeData {
 
 interface ResumeState {
   data: ResumeData
-  isDirty: boolean
-  lastSaved: Date | null
 }
 
 type ResumeAction =
@@ -73,10 +80,18 @@ type ResumeAction =
   | { type: 'UPDATE_SKILL'; payload: { id: string; data: Partial<Skill> } }
   | { type: 'DELETE_SKILL'; payload: string }
   | { type: 'SET_TEMPLATE'; payload: string }
+  | { type: 'UPDATE_STYLE'; payload: Partial<ResumeStyle> }
   | { type: 'TOGGLE_SECTION'; payload: keyof ResumeData['sections'] }
   | { type: 'LOAD_RESUME'; payload: ResumeData }
   | { type: 'RESET_RESUME' }
-  | { type: 'MARK_SAVED' }
+
+const defaultStyle: ResumeStyle = {
+  fontFamily: 'Inter',
+  accentColor: '#1e293b',
+  textColor: '#374151',
+  dividerWidth: 1,
+  dividerColor: '#cbd5e1',
+}
 
 const initialState: ResumeState = {
   data: {
@@ -94,6 +109,7 @@ const initialState: ResumeState = {
     education: [],
     skills: [],
     template: 'professional',
+    style: defaultStyle,
     sections: {
       personalInfo: true,
       summary: true,
@@ -101,9 +117,7 @@ const initialState: ResumeState = {
       education: true,
       skills: true
     }
-  },
-  isDirty: false,
-  lastSaved: null
+  }
 }
 
 function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
@@ -114,27 +128,18 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
         data: {
           ...state.data,
           personalInfo: { ...state.data.personalInfo, ...action.payload }
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'UPDATE_SUMMARY':
-      return {
-        ...state,
-        data: { ...state.data, summary: action.payload },
-        isDirty: true
-      }
-    
+      return { ...state, data: { ...state.data, summary: action.payload } }
+
     case 'ADD_EXPERIENCE':
       return {
         ...state,
-        data: {
-          ...state.data,
-          experience: [...state.data.experience, action.payload]
-        },
-        isDirty: true
+        data: { ...state.data, experience: [...state.data.experience, action.payload] }
       }
-    
+
     case 'UPDATE_EXPERIENCE':
       return {
         ...state,
@@ -143,30 +148,24 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
           experience: state.data.experience.map(exp =>
             exp.id === action.payload.id ? { ...exp, ...action.payload.data } : exp
           )
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'DELETE_EXPERIENCE':
       return {
         ...state,
         data: {
           ...state.data,
           experience: state.data.experience.filter(exp => exp.id !== action.payload)
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'ADD_EDUCATION':
       return {
         ...state,
-        data: {
-          ...state.data,
-          education: [...state.data.education, action.payload]
-        },
-        isDirty: true
+        data: { ...state.data, education: [...state.data.education, action.payload] }
       }
-    
+
     case 'UPDATE_EDUCATION':
       return {
         ...state,
@@ -175,30 +174,24 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
           education: state.data.education.map(edu =>
             edu.id === action.payload.id ? { ...edu, ...action.payload.data } : edu
           )
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'DELETE_EDUCATION':
       return {
         ...state,
         data: {
           ...state.data,
           education: state.data.education.filter(edu => edu.id !== action.payload)
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'ADD_SKILL':
       return {
         ...state,
-        data: {
-          ...state.data,
-          skills: [...state.data.skills, action.payload]
-        },
-        isDirty: true
+        data: { ...state.data, skills: [...state.data.skills, action.payload] }
       }
-    
+
     case 'UPDATE_SKILL':
       return {
         ...state,
@@ -207,27 +200,27 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
           skills: state.data.skills.map(skill =>
             skill.id === action.payload.id ? { ...skill, ...action.payload.data } : skill
           )
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'DELETE_SKILL':
       return {
         ...state,
         data: {
           ...state.data,
           skills: state.data.skills.filter(skill => skill.id !== action.payload)
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'SET_TEMPLATE':
+      return { ...state, data: { ...state.data, template: action.payload } }
+
+    case 'UPDATE_STYLE':
       return {
         ...state,
-        data: { ...state.data, template: action.payload },
-        isDirty: true
+        data: { ...state.data, style: { ...state.data.style, ...action.payload } }
       }
-    
+
     case 'TOGGLE_SECTION':
       return {
         ...state,
@@ -237,47 +230,30 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
             ...state.data.sections,
             [action.payload]: !state.data.sections[action.payload]
           }
-        },
-        isDirty: true
+        }
       }
-    
+
     case 'LOAD_RESUME':
-      return {
-        ...state,
-        data: action.payload,
-        isDirty: false,
-        lastSaved: new Date()
-      }
-    
+      return { ...state, data: action.payload }
+
     case 'RESET_RESUME':
       return initialState
-    
-    case 'MARK_SAVED':
-      return {
-        ...state,
-        isDirty: false,
-        lastSaved: new Date()
-      }
-    
+
     default:
       return state
   }
 }
 
 interface ResumeContextType {
-  // State
   personalInfo: PersonalInfo
   summary: string
   experience: Experience[]
   education: Education[]
   skills: Skill[]
   selectedTemplate: string
+  style: ResumeStyle
   sections: ResumeData['sections']
-  isDirty: boolean
-  lastSaved: Date | null
-  hasUnsavedChanges: boolean
-  
-  // Actions
+
   updatePersonalInfo: (info: Partial<PersonalInfo>) => void
   updateSummary: (summary: string) => void
   addExperience: (experience: Experience) => void
@@ -290,34 +266,30 @@ interface ResumeContextType {
   updateSkill: (id: string, data: Partial<Skill>) => void
   deleteSkill: (id: string) => void
   setSelectedTemplate: (template: string) => void
+  updateStyle: (style: Partial<ResumeStyle>) => void
   toggleSection: (section: keyof ResumeData['sections']) => void
   generateId: () => string
   resetResume: () => void
   loadResume: (data: ResumeData) => void
   exportResume: () => void
   importResume: (data: ResumeData) => void
-  markSaved: () => void
 }
 
 const ResumeContext = createContext<ResumeContextType | undefined>(undefined)
 
 export function ResumeProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(resumeReducer, initialState)
-  
-  const generateId = () => {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2)
-  }
+
+  const generateId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
   const exportResume = () => {
     const dataStr = JSON.stringify(state.data, null, 2)
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
-    
-    const exportFileDefaultName = `resume-${state.data.personalInfo.fullName || 'untitled'}-${new Date().toISOString().split('T')[0]}.json`
-    
-    const linkElement = document.createElement('a')
-    linkElement.setAttribute('href', dataUri)
-    linkElement.setAttribute('download', exportFileDefaultName)
-    linkElement.click()
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+    const name = `resume-${state.data.personalInfo.fullName || 'untitled'}-${new Date().toISOString().split('T')[0]}.json`
+    const link = document.createElement('a')
+    link.setAttribute('href', dataUri)
+    link.setAttribute('download', name)
+    link.click()
   }
 
   const importResume = (data: ResumeData) => {
@@ -325,70 +297,34 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   }
 
   const contextValue: ResumeContextType = {
-    // State
     personalInfo: state.data.personalInfo,
     summary: state.data.summary,
     experience: state.data.experience,
     education: state.data.education,
     skills: state.data.skills,
     selectedTemplate: state.data.template,
+    style: state.data.style,
     sections: state.data.sections,
-    isDirty: state.isDirty,
-    lastSaved: state.lastSaved,
-    hasUnsavedChanges: state.isDirty,
-    
-    // Actions
-    updatePersonalInfo: (info: Partial<PersonalInfo>) => {
-      dispatch({ type: 'UPDATE_PERSONAL_INFO', payload: info })
-    },
-    updateSummary: (summary: string) => {
-      dispatch({ type: 'UPDATE_SUMMARY', payload: summary })
-    },
-    addExperience: (experience: Experience) => {
-      dispatch({ type: 'ADD_EXPERIENCE', payload: experience })
-    },
-    updateExperience: (id: string, data: Partial<Experience>) => {
-      dispatch({ type: 'UPDATE_EXPERIENCE', payload: { id, data } })
-    },
-    deleteExperience: (id: string) => {
-      dispatch({ type: 'DELETE_EXPERIENCE', payload: id })
-    },
-    addEducation: (education: Education) => {
-      dispatch({ type: 'ADD_EDUCATION', payload: education })
-    },
-    updateEducation: (id: string, data: Partial<Education>) => {
-      dispatch({ type: 'UPDATE_EDUCATION', payload: { id, data } })
-    },
-    deleteEducation: (id: string) => {
-      dispatch({ type: 'DELETE_EDUCATION', payload: id })
-    },
-    addSkill: (skill: Skill) => {
-      dispatch({ type: 'ADD_SKILL', payload: skill })
-    },
-    updateSkill: (id: string, data: Partial<Skill>) => {
-      dispatch({ type: 'UPDATE_SKILL', payload: { id, data } })
-    },
-    deleteSkill: (id: string) => {
-      dispatch({ type: 'DELETE_SKILL', payload: id })
-    },
-    setSelectedTemplate: (template: string) => {
-      dispatch({ type: 'SET_TEMPLATE', payload: template })
-    },
-    toggleSection: (section: keyof ResumeData['sections']) => {
-      dispatch({ type: 'TOGGLE_SECTION', payload: section })
-    },
+
+    updatePersonalInfo: (info) => dispatch({ type: 'UPDATE_PERSONAL_INFO', payload: info }),
+    updateSummary: (summary) => dispatch({ type: 'UPDATE_SUMMARY', payload: summary }),
+    addExperience: (experience) => dispatch({ type: 'ADD_EXPERIENCE', payload: experience }),
+    updateExperience: (id, data) => dispatch({ type: 'UPDATE_EXPERIENCE', payload: { id, data } }),
+    deleteExperience: (id) => dispatch({ type: 'DELETE_EXPERIENCE', payload: id }),
+    addEducation: (education) => dispatch({ type: 'ADD_EDUCATION', payload: education }),
+    updateEducation: (id, data) => dispatch({ type: 'UPDATE_EDUCATION', payload: { id, data } }),
+    deleteEducation: (id) => dispatch({ type: 'DELETE_EDUCATION', payload: id }),
+    addSkill: (skill) => dispatch({ type: 'ADD_SKILL', payload: skill }),
+    updateSkill: (id, data) => dispatch({ type: 'UPDATE_SKILL', payload: { id, data } }),
+    deleteSkill: (id) => dispatch({ type: 'DELETE_SKILL', payload: id }),
+    setSelectedTemplate: (template) => dispatch({ type: 'SET_TEMPLATE', payload: template }),
+    updateStyle: (style) => dispatch({ type: 'UPDATE_STYLE', payload: style }),
+    toggleSection: (section) => dispatch({ type: 'TOGGLE_SECTION', payload: section }),
     generateId,
-    resetResume: () => {
-      dispatch({ type: 'RESET_RESUME' })
-    },
-    loadResume: (data: ResumeData) => {
-      dispatch({ type: 'LOAD_RESUME', payload: data })
-    },
+    resetResume: () => dispatch({ type: 'RESET_RESUME' }),
+    loadResume: (data) => dispatch({ type: 'LOAD_RESUME', payload: data }),
     exportResume,
     importResume,
-    markSaved: () => {
-      dispatch({ type: 'MARK_SAVED' })
-    }
   }
 
   return (
@@ -406,5 +342,4 @@ export function useResume() {
   return context
 }
 
-// Export the same function with different name for compatibility
 export const useResumeContext = useResume

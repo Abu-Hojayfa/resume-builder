@@ -1,141 +1,108 @@
 import { ResumeData } from '../../contexts/ResumeContext'
 
-interface ProfessionalTemplateProps {
-  data: ResumeData
+interface Props { data: ResumeData }
+
+function fmt(d: string) {
+  if (!d) return ''
+  const date = new Date(d + '-01')
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 }
 
-export default function ProfessionalTemplate({ data }: ProfessionalTemplateProps) {
-  const { personalInfo, summary, experience, education, skills, sections } = data
+export default function ProfessionalTemplate({ data }: Props) {
+  const { personalInfo: p, summary, experience, education, skills, sections, style } = data
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  }
+  const fontStack = `'${style.fontFamily}', Georgia, serif`
+  const divider = style.dividerWidth > 0
+    ? `${style.dividerWidth}px solid ${style.dividerColor}`
+    : 'none'
 
   return (
-    <div className="resume-content font-serif text-gray-900" style={{ padding: '0.5in' }}>
+    <div style={{ fontFamily: fontStack, color: style.textColor, padding: '0.55in', background: '#fff', minHeight: '11in' }}>
+
       {/* Header */}
       {sections.personalInfo && (
-        <header className="text-center border-b-2 border-gray-800 pb-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {personalInfo.fullName || 'Your Name'}
+        <header style={{ textAlign: 'center', borderBottom: `2px solid ${style.accentColor}`, paddingBottom: '0.35in', marginBottom: '0.25in' }}>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: style.accentColor, margin: 0 }}>
+            {p.fullName || 'Your Name'}
           </h1>
-          <div className="flex flex-wrap justify-center items-center text-sm text-gray-600 space-x-4">
-            {personalInfo.email && (
-              <span>{personalInfo.email}</span>
-            )}
-            {personalInfo.phone && (
-              <span>{personalInfo.phone}</span>
-            )}
-            {personalInfo.location && (
-              <span>{personalInfo.location}</span>
-            )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0 1rem', marginTop: 6, fontSize: '0.8rem', color: style.textColor }}>
+            {p.email && <span>{p.email}</span>}
+            {p.phone && <span>{p.phone}</span>}
+            {p.location && <span>{p.location}</span>}
+            {p.website && <span>{p.website}</span>}
+            {p.linkedin && <span>linkedin.com/in/{p.linkedin.replace(/.*\/in\//, '')}</span>}
+            {p.github && <span>github.com/{p.github.replace(/.*github\.com\//, '')}</span>}
           </div>
-          {(personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
-            <div className="flex flex-wrap justify-center items-center text-sm text-gray-600 space-x-4 mt-2">
-              {personalInfo.website && (
-                <span>{personalInfo.website}</span>
-              )}
-              {personalInfo.linkedin && (
-                <span>LinkedIn: {personalInfo.linkedin}</span>
-              )}
-              {personalInfo.github && (
-                <span>GitHub: {personalInfo.github}</span>
-              )}
-            </div>
-          )}
         </header>
       )}
 
-      {/* Professional Summary */}
+      {/* Summary */}
       {sections.summary && summary && (
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-400 pb-1 mb-3">
-            PROFESSIONAL SUMMARY
+        <section style={{ marginBottom: '0.2in' }}>
+          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', color: style.accentColor, textTransform: 'uppercase', borderBottom: divider, paddingBottom: 4, marginBottom: 8 }}>
+            Professional Summary
           </h2>
-          <p className="text-sm leading-relaxed text-gray-800">
-            {summary}
-          </p>
+          <p style={{ fontSize: '0.85rem', lineHeight: 1.6 }}>{summary}</p>
         </section>
       )}
 
       {/* Experience */}
       {sections.experience && experience.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-400 pb-1 mb-3">
-            PROFESSIONAL EXPERIENCE
+        <section style={{ marginBottom: '0.2in' }}>
+          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', color: style.accentColor, textTransform: 'uppercase', borderBottom: divider, paddingBottom: 4, marginBottom: 10 }}>
+            Experience
           </h2>
-          <div className="space-y-4">
-            {experience.map((exp) => (
-              <div key={exp.id} className="break-inside-avoid">
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900">{exp.position}</h3>
-                    <p className="text-sm font-medium text-gray-700">{exp.company}</p>
-                  </div>
-                  <div className="text-right text-sm text-gray-600">
-                    <p>{formatDate(exp.startDate)} - {exp.current ? 'Present' : formatDate(exp.endDate)}</p>
-                    {exp.location && <p>{exp.location}</p>}
-                  </div>
+          {experience.map(exp => (
+            <div key={exp.id} style={{ marginBottom: 12, pageBreakInside: 'avoid' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: '0.9rem', margin: 0 }}>{exp.position}</p>
+                  <p style={{ fontSize: '0.82rem', fontWeight: 500, margin: '2px 0 0', color: style.accentColor }}>{exp.company}{exp.location ? ` · ${exp.location}` : ''}</p>
                 </div>
-                {exp.description && (
-                  <div className="text-sm text-gray-800 leading-relaxed mt-2">
-                    {exp.description.split('\n').map((line, index) => (
-                      <p key={index} className="mb-1">{line}</p>
-                    ))}
-                  </div>
-                )}
+                <p style={{ fontSize: '0.78rem', whiteSpace: 'nowrap', marginLeft: 12, color: '#6b7280' }}>
+                  {fmt(exp.startDate)} – {exp.current ? 'Present' : fmt(exp.endDate)}
+                </p>
               </div>
-            ))}
-          </div>
+              {exp.description && (
+                <div style={{ marginTop: 4, fontSize: '0.82rem', lineHeight: 1.55 }}>
+                  {exp.description.split('\n').map((line, i) => <p key={i} style={{ margin: '1px 0' }}>{line}</p>)}
+                </div>
+              )}
+            </div>
+          ))}
         </section>
       )}
 
       {/* Education */}
       {sections.education && education.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-400 pb-1 mb-3">
-            EDUCATION
+        <section style={{ marginBottom: '0.2in' }}>
+          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', color: style.accentColor, textTransform: 'uppercase', borderBottom: divider, paddingBottom: 4, marginBottom: 10 }}>
+            Education
           </h2>
-          <div className="space-y-3">
-            {education.map((edu) => (
-              <div key={edu.id} className="break-inside-avoid">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900">
-                      {edu.degree} {edu.field && `in ${edu.field}`}
-                    </h3>
-                    <p className="text-sm font-medium text-gray-700">{edu.institution}</p>
-                    {edu.gpa && (
-                      <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>
-                    )}
-                  </div>
-                  <div className="text-right text-sm text-gray-600">
-                    <p>{formatDate(edu.startDate)} - {formatDate(edu.endDate)}</p>
-                    {edu.location && <p>{edu.location}</p>}
-                  </div>
-                </div>
+          {education.map(edu => (
+            <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, pageBreakInside: 'avoid' }}>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: '0.88rem', margin: 0 }}>{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</p>
+                <p style={{ fontSize: '0.82rem', margin: '2px 0 0', color: style.accentColor }}>{edu.institution}</p>
+                {edu.gpa && <p style={{ fontSize: '0.78rem', margin: '1px 0 0', color: '#6b7280' }}>GPA: {edu.gpa}</p>}
               </div>
-            ))}
-          </div>
+              <p style={{ fontSize: '0.78rem', whiteSpace: 'nowrap', marginLeft: 12, color: '#6b7280' }}>
+                {fmt(edu.startDate)}{edu.endDate ? ` – ${fmt(edu.endDate)}` : ''}
+              </p>
+            </div>
+          ))}
         </section>
       )}
 
       {/* Skills */}
       {sections.skills && skills.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 border-b border-gray-400 pb-1 mb-3">
-            TECHNICAL SKILLS
+        <section>
+          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', color: style.accentColor, textTransform: 'uppercase', borderBottom: divider, paddingBottom: 4, marginBottom: 10 }}>
+            Skills
           </h2>
-          <div className="grid grid-cols-2 gap-x-8 text-sm">
-            {skills.map((skill) => (
-              <div key={skill.id} className="flex justify-between items-center py-1">
-                <span className="text-gray-800">{skill.name}</span>
-                <span className="text-gray-600 text-xs capitalize">({skill.level})</span>
-              </div>
-            ))}
-          </div>
+          <p style={{ fontSize: '0.82rem', lineHeight: 1.7 }}>
+            {skills.map(s => s.name).join(' · ')}
+          </p>
         </section>
       )}
     </div>
