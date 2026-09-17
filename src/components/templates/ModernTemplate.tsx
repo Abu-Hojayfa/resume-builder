@@ -56,7 +56,7 @@ export default function ModernTemplate({ data }: Props) {
           <section style={{ marginBottom: 20 }}>
             <SectionHeading>Experience</SectionHeading>
             {experience.map(exp => (
-              <div key={exp.id} style={{ marginBottom: 14, paddingLeft: 12, borderLeft: `3px solid ${style.dividerColor}`, pageBreakInside: 'avoid' }}>
+              <div key={exp.id} style={{ marginBottom: 14, pageBreakInside: 'avoid' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <p style={{ fontWeight: 700, fontSize: '0.88rem', margin: 0 }}>{exp.position}</p>
@@ -82,7 +82,7 @@ export default function ModernTemplate({ data }: Props) {
           <section style={{ marginBottom: 20 }}>
             <SectionHeading>Education</SectionHeading>
             {education.map(edu => (
-              <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, paddingLeft: 12, borderLeft: `3px solid ${style.dividerColor}` }}>
+              <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
                   <p style={{ fontWeight: 700, fontSize: '0.88rem', margin: 0 }}>{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</p>
                   <p style={{ fontSize: '0.82rem', color: style.accentColor, margin: '2px 0 0' }}>{edu.institution}</p>

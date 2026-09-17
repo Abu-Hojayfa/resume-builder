@@ -93,7 +93,7 @@ export default function CreativeTemplate({ data }: Props) {
           <section>
             <h2 style={{ fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: style.accentColor, marginBottom: 12, borderBottom: style.dividerWidth > 0 ? `${style.dividerWidth}px solid ${style.dividerColor}` : 'none', paddingBottom: 4 }}>Experience</h2>
             {experience.map(exp => (
-              <div key={exp.id} style={{ marginBottom: 18, position: 'relative', paddingLeft: 14, borderLeft: `3px solid ${style.accentColor}`, pageBreakInside: 'avoid' }}>
+              <div key={exp.id} style={{ marginBottom: 18, position: 'relative', pageBreakInside: 'avoid' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <h3 style={{ fontWeight: 700, fontSize: '0.88rem', margin: 0 }}>{exp.position}</h3>

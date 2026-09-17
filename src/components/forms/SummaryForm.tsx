@@ -17,7 +17,7 @@ export default function SummaryForm() {
             className="form-input"
             value={summary}
             onChange={e => updateSummary(e.target.value)}
-            placeholder="Results-driven professional with X years of experience in..."
+            placeholder="Senior frontend engineer specializing in React and distributed state management. Previously led the core UI rewrite at Stripe, increasing checkout conversion by 14%."
             rows={7}
           />
           <p className="form-hint">{summary.length} / 600 characters</p>

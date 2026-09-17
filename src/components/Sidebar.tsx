@@ -48,7 +48,7 @@ export default function Sidebar({ activeSection, onSectionChange, onOpenFullscre
       {/* Progress */}
       <div className="sidebar-progress">
         <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
+          <div className="progress-fill" style={{ transform: `scaleX(${progress / 100})` }} />
         </div>
         <span className="progress-label">{progress}% complete</span>
       </div>

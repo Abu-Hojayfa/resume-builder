@@ -108,7 +108,7 @@ function ExperienceEditForm({
           value={company}
           onChange={e => setCompany(e.target.value)}
           onBlur={flush}
-          placeholder="Google"
+          placeholder="Linear"
         />
       </div>
 
@@ -164,7 +164,7 @@ function ExperienceEditForm({
           rows={5}
           onChange={e => setDescription(e.target.value)}
           onBlur={flush}
-          placeholder={'• Built a feature that cut load time by 40%\n• Mentored two junior developers\n• Collaborated with design and product teams'}
+          placeholder={'• Architected a React-based checkout flow that increased conversion by 14%\n• Reduced initial bundle size by 40% through aggressive code-splitting\n• Led a squad of 4 engineers to deliver the Q3 product roadmap'}
         />
         <p className="form-hint">Start each line with a bullet point (•) to list your key contributions.</p>
       </div>

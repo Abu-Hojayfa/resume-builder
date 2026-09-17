@@ -1,13 +1,13 @@
 import { useResume } from '../../contexts/ResumeContext'
 
 const fields: { key: keyof ReturnType<typeof useResume>['personalInfo']; label: string; type: string; placeholder: string; required?: boolean }[] = [
-  { key: 'fullName', label: 'Full Name', type: 'text', placeholder: 'John Doe', required: true },
-  { key: 'email', label: 'Email Address', type: 'email', placeholder: 'john@example.com', required: true },
-  { key: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+1 (555) 123-4567', required: true },
-  { key: 'location', label: 'Location', type: 'text', placeholder: 'New York, NY', required: true },
-  { key: 'website', label: 'Website', type: 'url', placeholder: 'https://yourwebsite.com' },
-  { key: 'linkedin', label: 'LinkedIn', type: 'url', placeholder: 'https://linkedin.com/in/username' },
-  { key: 'github', label: 'GitHub', type: 'url', placeholder: 'https://github.com/username' },
+  { key: 'fullName', label: 'Full Name', type: 'text', placeholder: 'Alex Mercer', required: true },
+  { key: 'email', label: 'Email Address', type: 'email', placeholder: 'alex.mercer@example.com', required: true },
+  { key: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+1 (415) 867-5309', required: true },
+  { key: 'location', label: 'Location', type: 'text', placeholder: 'San Francisco, CA', required: true },
+  { key: 'website', label: 'Website', type: 'url', placeholder: 'https://alexmercer.dev' },
+  { key: 'linkedin', label: 'LinkedIn', type: 'url', placeholder: 'https://linkedin.com/in/alexmercer' },
+  { key: 'github', label: 'GitHub', type: 'url', placeholder: 'https://github.com/alexmercer' },
 ]
 
 export default function PersonalInfoForm() {
